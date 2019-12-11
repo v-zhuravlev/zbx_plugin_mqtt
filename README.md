@@ -2,6 +2,9 @@
 
 Zabbix agent2 plugin(watcher) implementing MQTT. Work in progress.
 
+![image](https://user-images.githubusercontent.com/14870891/70622869-e340c400-1c2d-11ea-8ec0-bd1a89e970ee.png)
+
+
 ## Build
 
 Make sure golang is [installed](https://golang.org/doc/install) and properly configured.
