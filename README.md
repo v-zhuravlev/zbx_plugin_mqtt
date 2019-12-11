@@ -97,6 +97,7 @@ Change `LogType=console` and `DebugLevel=4` in config file.
 
 and perhaps...
 
+- [ ] add support of TLS options
 - [ ] add throttling with avg(), max(), min()...1min... (out of scope?)
 - [ ] add support of QoS 1/2 messages
 - [ ] add support for retain messages
