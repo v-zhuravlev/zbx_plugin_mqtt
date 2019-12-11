@@ -29,13 +29,14 @@ import (
 
 `./bootstrap.sh`   
 `pushd .`  
-`cd src/go/plugins/mqtt`  
+`cd src/go/`  
 `go mod vendor`  
 `popd`  
 Apply patches:  
 `git apply  src/go/plugins/mqtt/patches/manager.patch`  
+(see [this upstream PR](https://github.com/eclipse/paho.mqtt.golang/pull/388)):  
 `git apply  src/go/plugins/mqtt/patches/router.patch`  
-`./configure --enable-agent2`   
+`./configure --enable-agent2`  
 `make`  
 
 You will then find new agent with plugin included in src/go/bin dir
@@ -46,16 +47,15 @@ Test it by running
 
 ## TODO
 
-[ ] disconnect MQTT clients when there is no active mqtt.subscribe
-[ ] disconnect MQTT and remove subsceribe_passive when there is no active calls for mqtt.subscribe_passive
-[ ] make `last` expirable (configuration parameter)
-[x] move mqtt.get to separate plugin so no Exporter invocation
-[x] make user + password configurable in config file
-
+- [ ] disconnect MQTT clients when there is no active mqtt.subscribe
+- [ ] disconnect MQTT and remove subsceribe_passive when there is no active calls for mqtt.subscribe_passive
+- [ ] make `last` expirable (configuration parameter)
+- [x] move mqtt.get to separate plugin so no Exporter invocation
+- [x] make user + password configurable in config file
 
 ## TODO PHASE 2
 
-[ ] add throttling with avg(), max(), min()...1min... (out of scope?)
-[ ] add support of QoS 1/2 messages
-[ ] add support for retain messages
-[ ] add ability to subscribe from Config file instead of mqtt.subscribe[]
+- [ ] add throttling with avg(), max(), min()...1min... (out of scope?)
+- [ ] add support of QoS 1/2 messages
+- [ ] add support for retain messages
+- [ ] add ability to subscribe from Config file instead of mqtt.subscribe[]
