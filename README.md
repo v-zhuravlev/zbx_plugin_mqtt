@@ -1,4 +1,4 @@
-# MQTT subscriber
+# Zabbix agent2 MQTT subscriber plugin
 
 Zabbix agent2 plugin(watcher) implementing MQTT. Work in progress.
 
@@ -12,7 +12,7 @@ Checkout zabbix:
 Checkout this plugin repo:  
 `git submodule add https://github.com/v-zhuravlev/zbx_plugin_mqtt.git src/go/plugins/mqtt`  
 
-Edit file `src/go/plugins/plugins.go` by appending `_ "zabbix.com/plugins/serial"`:
+Edit file `src/go/plugins/plugins.go` by appending `_ "zabbix.com/plugins/mqtt"`:
 
 ```go
 package plugins
@@ -44,6 +44,10 @@ You will then find new agent with plugin included in `src/go/bin` dir
 Test it by running
 `./zabbix-agent2 -t agent.ping -c ../conf/zabbix_agent2.conf`
 
+## Known limitations
+
+- Only Zabbix agent (active) is supported, thus impossible to use single Zabbix agent2 with multiple hosts. Waiting for `Passive bulk` implementation in Zabbix.
+
 ## TODO
 
 - [ ] disconnect MQTT clients when there is no active mqtt.subscribe
@@ -57,6 +61,9 @@ Test it by running
 - [ ] add support for retain messages
 - [ ] add ability to subscribe from Config file instead of mqtt.subscribe[]
 
-## Known limitations
+## Changelog
 
-- Only Zabbix agent (active) is supported, thus impossible to use single Zabbix agent2 with multiple hosts. Waiting for `Passive bulk` implementation in Zabbix.
+### v0.1
+
+Initial version
+
