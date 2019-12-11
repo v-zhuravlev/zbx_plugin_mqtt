@@ -102,6 +102,7 @@ and perhaps...
 - [ ] add support of QoS 1/2 messages
 - [ ] add support for retain messages
 - [ ] add ability to subscribe from Config file instead of mqtt.subscribe[]
+- [ ] implement ReconnectHandler https://github.com/eclipse/paho.mqtt.golang/blob/master/options.go#L51
 
 ## Changelog
 

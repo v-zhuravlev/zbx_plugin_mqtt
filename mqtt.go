@@ -64,7 +64,7 @@ func (p *Plugin) Watch(requests []*plugin.Request, ctx plugin.ContextProvider) {
 	p.manager.Unlock()
 
 	for _, v := range p.mqttSubs {
-		impl.Debugf("Registered MQTT subscriptions (broker and topic): %s %s\n", v.broker, v.topic)
+		impl.Debugf("Registered MQTT subscriptions (broker and topic): %s,%s\n", v.broker, v.topic)
 	}
 	impl.Debugf("Registered MQTT clients after update %v\n", p.mqttClients)
 
@@ -93,6 +93,7 @@ func (t *mqttSub) mqttConnect() (mqttClient *MQTT.Client, err error) {
 		if (*mqttClient).IsConnected() {
 			impl.Debugf("Already has connection\n")
 		} else {
+			impl.Errf("%s", MQTT.ErrNotConnected)
 			return nil, MQTT.ErrNotConnected
 		}
 	} else {
@@ -201,6 +202,10 @@ func (p *Plugin) newSub(broker string, topic string) (listener *mqttSub) {
 	tlsConfig := &tls.Config{InsecureSkipVerify: true, ClientAuth: tls.NoClientCert}
 	connOpts.SetTLSConfig(tlsConfig)
 
+
+	connOpts.OnConnectionLost = func (client MQTT.Client, reason error)  {
+		p.Errf("Connection lost to %s, reason: %s", broker, reason.Error())
+	}
 	listener = &mqttSub{
 		broker:   broker,
 		manager:  p.manager,
