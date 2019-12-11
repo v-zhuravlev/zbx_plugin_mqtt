@@ -10,10 +10,10 @@ import (
 )
 
 type Options struct {
-	//Interval int
-	Username string // MQTT username to use
-	Password string // MQTT password to use
-	ClientID string // MQTT clientid to use
+	//Interval int `conf:"optional,range=0:10,default=10"`
+	Username string `conf:"optional"` // MQTT username to use
+	Password string `conf:"optional"` // MQTT password to use
+	ClientID string `conf:"optional"`
 }
 
 func (p *Plugin) Configure(global *plugin.GlobalOptions, private interface{}) {
