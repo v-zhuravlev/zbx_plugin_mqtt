@@ -10,7 +10,7 @@ Checkout zabbix:
 `git clone https://git.zabbix.com/scm/zbx/zabbix.git --depth 1 zabbix-agent2`  
 `cd zabbix-agent2`  
 Checkout this plugin repo:  
-`git clone https://github.com/v-zhuravlev/zbx_plugin_mqtt.git src/go/plugins/mqtt`  
+`git submodule add https://github.com/v-zhuravlev/zbx_plugin_mqtt.git src/go/plugins/mqtt`  
 
 Edit file `src/go/plugins/plugins.go` by appending `_ "zabbix.com/plugins/serial"`:
 
@@ -32,6 +32,9 @@ import (
 `cd src/go/plugins/mqtt`  
 `go mod vendor`  
 `popd`  
+Apply patches:  
+`git apply  src/go/plugins/mqtt/patches/manager.patch`  
+`git apply  src/go/plugins/mqtt/patches/router.patch`  
 `./configure --enable-agent2`   
 `make`  
 
