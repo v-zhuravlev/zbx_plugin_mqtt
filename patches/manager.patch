@@ -1,0 +1,25 @@
+From b85c0337d632e22ec7f71b679b08618cc3682626 Mon Sep 17 00:00:00 2001
+From: v-zhuravlev <zhuravlev.vitaly@gmail.com>
+Date: Tue, 3 Dec 2019 20:34:47 +0300
+Subject: [PATCH] updated manager.go
+
+---
+ src/go/pkg/watch/manager.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/go/pkg/watch/manager.go b/src/go/pkg/watch/manager.go
+index 246a6d1..9932ee6 100644
+--- a/src/go/pkg/watch/manager.go
++++ b/src/go/pkg/watch/manager.go
+@@ -140,7 +140,7 @@ func (m *Manager) Update(clientid uint64, output plugin.ResultWriter, requests [
+ 
+ 	for uri, sub := range m.subscriptions {
+ 		if len(sub) == 0 {
+-			if es, err := m.eventProvider.EventSourceByURI(uri); err != nil {
++			if es, err := m.eventProvider.EventSourceByURI(uri); err == nil {
+ 				es.Unsubscribe()
+ 			}
+ 			delete(m.subscriptions, uri)
+-- 
+2.7.4
+
