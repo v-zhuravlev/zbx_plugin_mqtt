@@ -1,7 +1,37 @@
+From ac1e285e33e305091ca8e8acff935ed865360764 Mon Sep 17 00:00:00 2001
+From: v-zhuravlev <zhuravlev.vitaly@gmail.com>
+Date: Fri, 29 Nov 2019 20:14:35 +0300
+Subject: [PATCH 1/2] fix subscriptions
+
+---
+ src/go/pkg/watch/manager.go | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/src/go/pkg/watch/manager.go b/src/go/pkg/watch/manager.go
+index 8521f60..246a6d1 100644
+--- a/src/go/pkg/watch/manager.go
++++ b/src/go/pkg/watch/manager.go
+@@ -129,8 +129,10 @@ func (m *Manager) Update(clientid uint64, output plugin.ResultWriter, requests [
+ 
+ 	for itemid, item := range client.Items {
+ 		if !item.Updated.Equal(now) {
+-			if sub, ok := m.subscriptions[item.Key]; ok {
+-				delete(sub, Source{Clientid: client.ID, Itemid: itemid})
++			if es, err := m.eventProvider.EventSourceByKey(item.Key); err == nil {
++				if sub, ok := m.subscriptions[es.URI()]; ok {
++					delete(sub, Source{Clientid: client.ID, Itemid: itemid})
++				}
+ 			}
+ 			delete(client.Items, itemid)
+ 		}
+-- 
+2.7.4
+
+
 From b85c0337d632e22ec7f71b679b08618cc3682626 Mon Sep 17 00:00:00 2001
 From: v-zhuravlev <zhuravlev.vitaly@gmail.com>
 Date: Tue, 3 Dec 2019 20:34:47 +0300
-Subject: [PATCH] updated manager.go
+Subject: [PATCH 2/2] updated manager.go
 
 ---
  src/go/pkg/watch/manager.go | 2 +-
