@@ -39,11 +39,10 @@ Apply patches:
 `./configure --enable-agent2`  
 `make`  
 
-You will then find new agent with plugin included in src/go/bin dir
+You will then find new agent with plugin included in `src/go/bin` dir
 
 Test it by running
-`zabbix-agent2 -t agent.ping`
-
+`./zabbix-agent2 -t agent.ping -c ../conf/zabbix_agent2.conf`
 
 ## TODO
 
