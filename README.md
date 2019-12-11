@@ -27,7 +27,7 @@ import (
 )
 ```
 
-`./bootstrap.sh`   
+`./bootstrap.sh`  
 `pushd .`  
 `cd src/go/`  
 `go mod vendor`  
@@ -61,20 +61,38 @@ Plugins.MQTTSubscribe.Password=<password here>
 
 ```shell
 Plugins.MQTTSubscribe.ClientID=zabbix-agent2-mqtt-client
-````
+```
 
+## Supported keys
+
+### mqtt.subscribe
+
+ `mqtt.subscribe[<broker URI>,<mqtt topic>]`
+
+ for example:
+
+ `mqtt.subscribe[tcp://192.168.1.1:1883,devices/+/values]`
+ 
+ Item must be of type `Zabbix agent(active)`.  
+ Also note, that update interval is ignored, values will be received once published to the MQTT broker.
+
+![image](https://user-images.githubusercontent.com/14870891/70622682-82b18700-1c2d-11ea-9d94-e9029eb42c8c.png)
+
+## Troubleshooting
+
+Change `LogType=console` and `DebugLevel=4` in config file.
 
 ## Known limitations
 
 - Only Zabbix agent (active) is supported, thus impossible to use single Zabbix agent2 with multiple hosts. Waiting for `Passive bulk` implementation in Zabbix.
 
-## TODO
+## Next steps
 
 - [ ] disconnect MQTT clients when there is no active mqtt.subscribe
 - [x] move mqtt.get to separate plugin so no Exporter invocation
 - [x] make user + password configurable in config file
 
-## TODO PHASE 2
+and perhaps...
 
 - [ ] add throttling with avg(), max(), min()...1min... (out of scope?)
 - [ ] add support of QoS 1/2 messages
