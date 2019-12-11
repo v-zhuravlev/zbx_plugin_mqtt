@@ -66,6 +66,12 @@ Plugins.MQTTSubscribe.Password=<password here>
 Plugins.MQTTSubscribe.ClientID=zabbix-agent2-mqtt-client
 ```
 
+- (optional) set MQTT Connection timeout in seconds. If not set, global Zabbix agent `Timeout=` will be used.
+
+```shell
+Plugins.MQTTSubscribe.Timeout=5
+```
+
 ## Supported keys
 
 ### mqtt.subscribe

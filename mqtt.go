@@ -191,6 +191,7 @@ func (p *Plugin) newSub(broker string, topic string) (listener *mqttSub) {
 	clientid := p.options.ClientID
 	username := p.options.Username
 	password := p.options.Password
+	timeout := time.Duration(p.options.Timeout) * time.Second
 
 	connOpts := MQTT.NewClientOptions().AddBroker(broker).SetClientID(clientid).SetCleanSession(true)
 	if username != "" {
@@ -201,6 +202,8 @@ func (p *Plugin) newSub(broker string, topic string) (listener *mqttSub) {
 	}
 	tlsConfig := &tls.Config{InsecureSkipVerify: true, ClientAuth: tls.NoClientCert}
 	connOpts.SetTLSConfig(tlsConfig)
+
+	connOpts.SetConnectTimeout(timeout)
 
 
 	connOpts.OnConnectionLost = func (client MQTT.Client, reason error)  {
