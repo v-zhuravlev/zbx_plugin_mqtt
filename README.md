@@ -47,8 +47,6 @@ Test it by running
 ## TODO
 
 - [ ] disconnect MQTT clients when there is no active mqtt.subscribe
-- [ ] disconnect MQTT and remove subsceribe_passive when there is no active calls for mqtt.subscribe_passive
-- [ ] make `last` expirable (configuration parameter)
 - [x] move mqtt.get to separate plugin so no Exporter invocation
 - [x] make user + password configurable in config file
 
@@ -58,3 +56,7 @@ Test it by running
 - [ ] add support of QoS 1/2 messages
 - [ ] add support for retain messages
 - [ ] add ability to subscribe from Config file instead of mqtt.subscribe[]
+
+## Known limitations
+
+- Only Zabbix agent (active) is supported, thus impossible to use single Zabbix agent2 with multiple hosts. Waiting for `Passive bulk` implementation in Zabbix.
