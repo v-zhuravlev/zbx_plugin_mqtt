@@ -44,6 +44,26 @@ You will then find new agent with plugin included in `src/go/bin` dir
 Test it by running
 `./zabbix-agent2 -t agent.ping -c ../conf/zabbix_agent2.conf`
 
+## Configuration
+
+In zabbix_agent2.conf:
+
+- set `ServerActive=` to IP of your Zabbix server or proxy
+- set `Hostname=` to host name you will use in Zabbix.
+- (optional) set MQTT name and password, if required by your broker:
+
+```shell
+Plugins.MQTTSubscribe.Username=<username here>
+Plugins.MQTTSubscribe.Password=<password here>
+```
+
+- (optional) set MQTT ClientID. If not set, ClientID will be generated automatically.
+
+```shell
+Plugins.MQTTSubscribe.ClientID=zabbix-agent2-mqtt-client
+````
+
+
 ## Known limitations
 
 - Only Zabbix agent (active) is supported, thus impossible to use single Zabbix agent2 with multiple hosts. Waiting for `Passive bulk` implementation in Zabbix.
