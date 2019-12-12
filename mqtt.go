@@ -94,13 +94,13 @@ func (p *Plugin) Watch(requests []*plugin.Request, ctx plugin.ContextProvider) {
 
 //Return connected MQTT client
 func (t *mqttSub) mqttConnect() (mqttClient *mqttClient, err error) {
-	impl.Infof("Checking for connection to %s\n", t.broker)
+	impl.Debugf("Checking for connection to %s\n", t.broker)
 	mqttClient, found := impl.mqttClients[t.broker]
 	if found && mqttClient.client != nil {
 		if (*mqttClient.client).IsConnected() {
 			impl.Debugf("Already has connection\n")
 		} else {
-			impl.Errf("%s", MQTT.ErrNotConnected)
+			impl.Errf("Failed to establish connection to %s for %s: %s", t.broker, t.topic, MQTT.ErrNotConnected)
 			return nil, MQTT.ErrNotConnected
 		}
 	} else {

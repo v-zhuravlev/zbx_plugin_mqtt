@@ -6,7 +6,6 @@ import (
 	"time"
 	"zabbix.com/pkg/conf"
 	"zabbix.com/pkg/plugin"
-	// MQTT "github.com/eclipse/paho.mqtt.golang"
 )
 
 type Options struct {

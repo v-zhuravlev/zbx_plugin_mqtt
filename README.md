@@ -91,9 +91,10 @@ Plugins.MQTTSubscribe.Timeout=5
 
 Change `LogType=console` and `DebugLevel=4` in config file.
 
-## Known limitations
+## Known problems and limitations
 
 - Only Zabbix agent (active) is supported, thus impossible to use single Zabbix agent2 with multiple hosts. Waiting for `Passive bulk` implementation in Zabbix.
+- Global timeout is ignored if there are no plugin specific options are defined https://support.zabbix.com/browse/ZBX-17070
 
 ## Next steps
 
