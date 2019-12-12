@@ -21,8 +21,8 @@ package mqtt
 
 import (
 	"crypto/tls"
-	"strings"
 	"fmt"
+	"strings"
 	"time"
 	"zabbix.com/pkg/itemutil"
 	"zabbix.com/pkg/plugin"
@@ -34,9 +34,9 @@ import (
 // Plugin
 type Plugin struct {
 	plugin.Base
-	manager         *watch.Manager
-	mqttClients     map[string]*mqttClient
-	options         Options
+	manager     *watch.Manager
+	mqttClients map[string]*mqttClient
+	options     Options
 }
 
 type mqttClient struct {
@@ -47,13 +47,26 @@ type mqttClient struct {
 }
 
 type mqttSub struct {
-	broker   string
-	topic    string
-	manager  *watch.Manager
+	broker  string
+	topic   string
+	manager *watch.Manager
+	state   state
 }
 
-var impl Plugin
+type state uint32
 
+const (
+	initial state = iota
+	subscribed
+)
+
+const (
+	qos0 byte = iota
+	qos1
+	qos2
+)
+
+var impl Plugin
 
 //Watch MQTT plugin
 func (p *Plugin) Watch(requests []*plugin.Request, ctx plugin.ContextProvider) {
@@ -77,7 +90,6 @@ func (p *Plugin) Watch(requests []*plugin.Request, ctx plugin.ContextProvider) {
 
 }
 
-
 func (t *mqttSub) onMessageReceived(client MQTT.Client, message MQTT.Message) {
 
 	t.manager.Lock()
@@ -91,13 +103,13 @@ func (t *mqttSub) mqttConnect() (mqttClient *mqttClient, err error) {
 	impl.Infof("Checking for connection to %s\n", t.broker)
 	mqttClient, found := impl.mqttClients[t.broker]
 	if found && mqttClient.client != nil {
-			if (*mqttClient.client).IsConnected() {
-				impl.Debugf("Already has connection\n")
-				// return mqttClient, nil
-			} else {
-				impl.Errf("%s", MQTT.ErrNotConnected)
-				return nil, MQTT.ErrNotConnected
-			}
+		if (*mqttClient.client).IsConnected() {
+			impl.Debugf("Already has connection\n")
+			// return mqttClient, nil
+		} else {
+			impl.Errf("%s", MQTT.ErrNotConnected)
+			return nil, MQTT.ErrNotConnected
+		}
 	} else {
 		tmp := MQTT.NewClient(&mqttClient.connOpts)
 		mqttClient.client = &tmp
@@ -121,15 +133,16 @@ func (t *mqttSub) mqttSubscribe(mqttClient *mqttClient) (err error) {
 
 	impl.Debugf("Adding subscriptions %v\n", t.topic)
 
-	if token := (*mqttClient.client).Subscribe(t.topic, byte(0), t.onMessageReceived); token.Wait() && token.Error() != nil {
+	if token := (*mqttClient.client).Subscribe(t.topic, qos0, t.onMessageReceived); token.Wait() && token.Error() != nil {
 		return error(token.Error())
 	}
+	t.state = subscribed
 	return nil
 }
 
 //what would be unique key
 func (t *mqttSub) URI() (uri string) {
-	return t.broker +"?"+ t.topic
+	return t.broker + "?" + t.topic
 }
 
 func (t *mqttSub) Subscribe() (err error) {
@@ -185,18 +198,18 @@ func (t *mqttSub) NewFilter(key string) (filter watch.EventFilter, err error) {
 	return &itemFilter{}, nil
 
 }
+
 //EventSourceByURI is used to unsubscribe
 //from the sources without items associated to them
 func (p *Plugin) EventSourceByURI(uri string) (es watch.EventSource, err error) {
 
 	var ok bool
 	s := strings.Split(uri, "?")
-	if es, ok = p.mqttClients[s[0]].mqttSubs[strings.Join(s[1:],"")]; !ok {
+	if es, ok = p.mqttClients[s[0]].mqttSubs[strings.Join(s[1:], "")]; !ok {
 		err = fmt.Errorf(`not registered listener URI "%s"`, uri)
 	}
 	return
 }
-
 
 //EventSourceByKey is used when trying to match item key
 //with it's event source during item update
@@ -225,14 +238,14 @@ func (p *Plugin) EventSourceByKey(key string) (es watch.EventSource, err error) 
 
 	//if no client exist, create?
 	if mqttC, ok := p.mqttClients[broker]; !ok {
-		
+
 		impl.Debugf("MQTT Client not found, going to prepare one for broker %s\n", broker)
 
 		clientid := p.options.ClientID
 		username := p.options.Username
 		password := p.options.Password
 		timeout := time.Duration(p.options.Timeout) * time.Second
-	
+
 		connOpts := MQTT.NewClientOptions().AddBroker(broker).SetClientID(clientid).SetCleanSession(true)
 		if username != "" {
 			connOpts.SetUsername(username)
@@ -242,29 +255,33 @@ func (p *Plugin) EventSourceByKey(key string) (es watch.EventSource, err error) 
 		}
 		tlsConfig := &tls.Config{InsecureSkipVerify: true, ClientAuth: tls.NoClientCert}
 		connOpts.SetTLSConfig(tlsConfig)
-	
+
 		connOpts.SetConnectTimeout(timeout)
-	
-	
-		connOpts.OnConnectionLost = func (client MQTT.Client, reason error)  {
+
+		connOpts.OnConnectionLost = func(client MQTT.Client, reason error) {
 			p.Errf("Connection lost to %s, reason: %s", broker, reason.Error())
 		}
-	
-		//This handler is required to sucessfully resubscribe on connection losts
-		connOpts.OnConnect = func (client MQTT.Client) {
+
+		//This handler is required to sucessfully resubscribe when connection is lost
+		connOpts.OnConnect = func(client MQTT.Client) {
 			p.Infof("Connected to %s", broker)
-	
-			for _, c := range p.mqttClients {
+			c, found := p.mqttClients[broker]
+			if found {
 				if c.broker == broker {
 					for _, v := range c.mqttSubs {
-						err := v.mqttSubscribe(c); if err != nil {
-							p.Errf("Failed subscribing to %s after connecting to %s\n", v.topic, broker)
+						if v.state == subscribed {
+							//if subscribed then resubscribe (reconnect case)
+							err := v.mqttSubscribe(c)
+							if err != nil {
+								p.Errf("Failed subscribing to %s after connecting to %s\n", v.topic, broker)
+							}
 						}
+
 					}
 				}
 			}
 		}
-		
+
 		mqttC = &mqttClient{
 			connOpts: *connOpts,
 			broker:   broker,
@@ -276,9 +293,10 @@ func (p *Plugin) EventSourceByKey(key string) (es watch.EventSource, err error) 
 	if listener, ok = p.mqttClients[broker].mqttSubs[topic]; !ok {
 		impl.Debugf("MQTT Subscription %s not found, going to prepare one for broker %s\n", topic, broker)
 		listener = &mqttSub{
-			broker:   broker,
-			manager:  p.manager,
-			topic:    topic,
+			broker:  broker,
+			manager: p.manager,
+			topic:   topic,
+			state:   initial, //required to differentiate  reconnection vs connection
 		}
 		p.mqttClients[broker].mqttSubs[topic] = listener
 	}
