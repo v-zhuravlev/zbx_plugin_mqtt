@@ -31,7 +31,6 @@ import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 )
 
-// Plugin
 type Plugin struct {
 	plugin.Base
 	manager     *watch.Manager
@@ -72,15 +71,18 @@ var impl Plugin
 func (p *Plugin) Watch(requests []*plugin.Request, ctx plugin.ContextProvider) {
 
 	p.manager.Lock()
-	//clear broken or invalid connections on agent sync
+
+	//this block cleans broken clients so they can be reinitialized
 	for broker, mqttClient := range impl.mqttClients {
 		if !(*mqttClient.client).IsConnected() {
 			//delete broken clients, so next subscription will try to reconnect
 			delete(impl.mqttClients, broker)
 		}
 	}
+
 	p.manager.Update(ctx.ClientID(), ctx.Output(), requests)
 	p.manager.Unlock()
+
 	for _, c := range p.mqttClients {
 		impl.Debugf("Registered MQTT clients after update %v\n", p.mqttClients)
 		for _, v := range c.mqttSubs {
@@ -90,22 +92,13 @@ func (p *Plugin) Watch(requests []*plugin.Request, ctx plugin.ContextProvider) {
 
 }
 
-func (t *mqttSub) onMessageReceived(client MQTT.Client, message MQTT.Message) {
-
-	t.manager.Lock()
-	impl.Debugf("Received message on topic(filter): %s(%s), Message: %s\n", message.Topic(), t.topic, message.Payload())
-	t.manager.Notify(t, message)
-	t.manager.Unlock()
-
-}
-
+//Return connected MQTT client
 func (t *mqttSub) mqttConnect() (mqttClient *mqttClient, err error) {
 	impl.Infof("Checking for connection to %s\n", t.broker)
 	mqttClient, found := impl.mqttClients[t.broker]
 	if found && mqttClient.client != nil {
 		if (*mqttClient.client).IsConnected() {
 			impl.Debugf("Already has connection\n")
-			// return mqttClient, nil
 		} else {
 			impl.Errf("%s", MQTT.ErrNotConnected)
 			return nil, MQTT.ErrNotConnected
@@ -115,17 +108,21 @@ func (t *mqttSub) mqttConnect() (mqttClient *mqttClient, err error) {
 		mqttClient.client = &tmp
 		if token := (*mqttClient.client).Connect(); token.Wait() && token.Error() != nil {
 			impl.Errf("%s\n", token.Error())
-			//impl.mqttClients[t.broker] = mqttClient
 			return nil, token.Error()
 		}
-		// } else {
-		// 	//impl.Infof("Connected to %s\n", t.broker)
-		// 	//add to list
-		// 	//impl.mqttClients[t.broker] = mqttClient
-		// }
+
 	}
 
 	return mqttClient, nil
+}
+
+func (t *mqttSub) onMessageReceived(client MQTT.Client, message MQTT.Message) {
+
+	t.manager.Lock()
+	impl.Debugf("Received message on topic(filter): %s(%s), Message: %s\n", message.Topic(), t.topic, message.Payload())
+	t.manager.Notify(t, message)
+	t.manager.Unlock()
+
 }
 
 //Describe what need to be done for each invocation
@@ -138,11 +135,6 @@ func (t *mqttSub) mqttSubscribe(mqttClient *mqttClient) (err error) {
 	}
 	t.state = subscribed
 	return nil
-}
-
-//what would be unique key
-func (t *mqttSub) URI() (uri string) {
-	return t.broker + "?" + t.topic
 }
 
 func (t *mqttSub) Subscribe() (err error) {
@@ -169,8 +161,8 @@ func (t *mqttSub) Unsubscribe() {
 			impl.Errf("%s\n", token.Error())
 		}
 	}
-	delete(mqttClient.mqttSubs, t.topic)
 
+	delete(mqttClient.mqttSubs, t.topic)
 	if len(mqttClient.mqttSubs) == 0 {
 		impl.Debugf("No subscriptions left for MQTT client %s, removing client", t.broker)
 		(*mqttClient.client).Disconnect(100)
@@ -178,25 +170,9 @@ func (t *mqttSub) Unsubscribe() {
 	}
 }
 
-type itemFilter struct {
-}
-
-//Convert and filter
-func (f *itemFilter) Convert(v interface{}) (value *string, err error) {
-
-	if b, ok := v.(MQTT.Message); !ok {
-		err = fmt.Errorf("unexpected traper conversion input type %T", v)
-	} else {
-		tmp := string(b.Payload())
-		value = &tmp
-	}
-	return
-}
-
-func (t *mqttSub) NewFilter(key string) (filter watch.EventFilter, err error) {
-
-	return &itemFilter{}, nil
-
+//Return unique MQTT subscription identifier
+func (t *mqttSub) URI() (uri string) {
+	return t.broker + "?" + t.topic
 }
 
 //EventSourceByURI is used to unsubscribe
@@ -219,19 +195,15 @@ func (p *Plugin) EventSourceByKey(key string) (es watch.EventSource, err error) 
 		return
 	}
 
-	var broker string
-	if len(params) == 0 {
-		return
+	if len(params) != 2 {
+		return nil, fmt.Errorf("Please provide key as mqtt.subscribe[<mqtt_broker>,<mqtt_topic>]")
 	}
 
+	var broker string
 	broker = params[0]
 
 	var topic string
-	if len(params) > 1 {
-		topic = params[1]
-	} else {
-		topic = "#"
-	}
+	topic = params[1]
 
 	var ok bool
 	var listener *mqttSub
@@ -296,11 +268,32 @@ func (p *Plugin) EventSourceByKey(key string) (es watch.EventSource, err error) 
 			broker:  broker,
 			manager: p.manager,
 			topic:   topic,
-			state:   initial, //required to differentiate  reconnection vs connection
+			state:   initial, //required to differentiate reconnection vs connection
 		}
 		p.mqttClients[broker].mqttSubs[topic] = listener
 	}
 	return listener, nil
+
+}
+
+type itemFilter struct {
+}
+
+//Convert and filter
+func (f *itemFilter) Convert(v interface{}) (value *string, err error) {
+
+	if b, ok := v.(MQTT.Message); !ok {
+		err = fmt.Errorf("unexpected traper conversion input type %T", v)
+	} else {
+		tmp := string(b.Payload())
+		value = &tmp
+	}
+	return
+}
+
+func (t *mqttSub) NewFilter(key string) (filter watch.EventFilter, err error) {
+
+	return &itemFilter{}, nil
 
 }
 
