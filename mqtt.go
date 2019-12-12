@@ -59,7 +59,6 @@ func (p *Plugin) Watch(requests []*plugin.Request, ctx plugin.ContextProvider) {
 			delete(impl.mqttClients, broker)
 		}
 	}
-
 	p.manager.Update(ctx.ClientID(), ctx.Output(), requests)
 	p.manager.Unlock()
 
@@ -92,6 +91,9 @@ func (t *mqttSub) mqttConnect() (mqttClient *MQTT.Client, err error) {
 	if found {
 		if (*mqttClient).IsConnected() {
 			impl.Debugf("Already has connection\n")
+			err := t.mqttSubscribe(mqttClient); if err != nil {
+				return mqttClient, err
+			}
 		} else {
 			impl.Errf("%s", MQTT.ErrNotConnected)
 			return nil, MQTT.ErrNotConnected
@@ -104,7 +106,7 @@ func (t *mqttSub) mqttConnect() (mqttClient *MQTT.Client, err error) {
 			impl.mqttClients[t.broker] = mqttClient
 			return nil, token.Error()
 		} else {
-			impl.Infof("Connected to %s\n", t.broker)
+			//impl.Infof("Connected to %s\n", t.broker)
 			//add to list
 			impl.mqttClients[t.broker] = mqttClient
 		}
@@ -131,11 +133,11 @@ func (t *mqttSub) URI() (uri string) {
 
 func (t *mqttSub) Subscribe() (err error) {
 
-	mqttClient, err := t.mqttConnect()
+	_, err = t.mqttConnect()
 	if err != nil {
 		return err
 	}
-	return t.mqttSubscribe(mqttClient)
+	return nil
 }
 
 func (t *mqttSub) Unsubscribe() {
@@ -174,7 +176,6 @@ func (t *mqttSub) NewFilter(key string) (filter watch.EventFilter, err error) {
 	return &itemFilter{}, nil
 
 }
-
 //EventSourceByURI is used to unsubscribe
 //from the sources without items associated to them
 func (p *Plugin) EventSourceByURI(uri string) (es watch.EventSource, err error) {
@@ -209,6 +210,20 @@ func (p *Plugin) newSub(broker string, topic string) (listener *mqttSub) {
 	connOpts.OnConnectionLost = func (client MQTT.Client, reason error)  {
 		p.Errf("Connection lost to %s, reason: %s", broker, reason.Error())
 	}
+
+	//This handler is required to sucessfully resubscribe on connection losts
+	connOpts.OnConnect = func (client MQTT.Client) {
+		p.Infof("Connected to %s", broker)
+
+		for _, v := range p.mqttSubs {
+			if v.broker == broker {
+				err := v.mqttSubscribe(&client); if err != nil {
+					p.Errf("Failed subscribing to %s after connecting to %s\n", v.topic, broker)
+				}
+			}
+		}
+	}
+
 	listener = &mqttSub{
 		broker:   broker,
 		manager:  p.manager,
