@@ -117,3 +117,7 @@ and perhaps...
 ### v0.1
 
 Initial version
+
+## Read more
+
+https://medium.com/@zhuravlev.vitaly/writing-watcher-zabbix-agent2-mqtt-plugin-in-go-e00067ea1990
