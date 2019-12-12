@@ -36,16 +36,11 @@ type Plugin struct {
 	manager         *watch.Manager
 	mqttSubs        map[string]*mqttSub
 	mqttClients     map[string]*MQTT.Client
-	passiveRequests map[string]*passiveRequest
 	options         Options
 }
 
 var impl Plugin
 
-type passiveRequest struct {
-	request *plugin.Request
-	mtime   time.Time
-}
 
 //Actual plugin
 func (p *Plugin) Watch(requests []*plugin.Request, ctx plugin.ContextProvider) {
