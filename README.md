@@ -39,7 +39,7 @@ Apply patches:
 `git apply  src/go/plugins/mqtt/patches/manager.patch`  
 (see [this upstream PR](https://github.com/eclipse/paho.mqtt.golang/pull/388)):  
 `git apply  src/go/plugins/mqtt/patches/router.patch`  
-`./configure --enable-agent2`  
+`./configure --enable-agent2 --enable-static`  
 `make`  
 
 You will then find new agent with plugin included in `src/go/bin` dir
@@ -83,7 +83,7 @@ Plugins.MQTTSubscribe.Timeout=5
  `mqtt.subscribe[tcp://192.168.1.1:1883,devices/+/values]`
 
  Item must be of type `Zabbix agent(active)`.  
- Also note, that update interval is ignored, values will be received once published to the MQTT broker.
+ Also note, that update interval is ignored, values will be received once published to the MQTT broker. Still, try to set update interval as closer as possible to the data update frequency, so you get proper graphs in Zabbix.
 
 ![image](https://user-images.githubusercontent.com/14870891/70622682-82b18700-1c2d-11ea-9d94-e9029eb42c8c.png)
 
