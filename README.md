@@ -100,6 +100,7 @@ Change `LogType=console` and `DebugLevel=4` in config file.
 - [x] disconnect MQTT clients when there is no active mqtt.subscribe
 - [x] move mqtt.get to separate plugin so no Exporter invocation
 - [x] make user + password configurable in config file
+- [ ] validate item params
 
 and perhaps...
 
