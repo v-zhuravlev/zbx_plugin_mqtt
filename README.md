@@ -1,6 +1,6 @@
 # Zabbix agent2 MQTT subscriber plugin
 
-Zabbix agent2 plugin(watcher) implementing MQTT. Work in progress.
+Zabbix agent2 plugin(watcher) implementing MQTT.
 
 ![image](https://user-images.githubusercontent.com/14870891/70622869-e340c400-1c2d-11ea-8ec0-bd1a89e970ee.png)
 
