@@ -196,7 +196,7 @@ func (p *Plugin) EventSourceByKey(key string) (es watch.EventSource, err error) 
 	}
 
 	if len(params) != 2 {
-		return nil, fmt.Errorf("Please provide key as mqtt.subscribe[<mqtt_broker>,<mqtt_topic>]")
+		return nil, fmt.Errorf("Please provide key as mqtt.subscribe[<MQTT broker URL>,<MQTT topic>]")
 	}
 
 	var broker string

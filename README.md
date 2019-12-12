@@ -76,12 +76,12 @@ Plugins.MQTTSubscribe.Timeout=5
 
 ### mqtt.subscribe
 
- `mqtt.subscribe[<broker URI>,<mqtt topic>]`
+ `mqtt.subscribe[<MQTT broker URL>,<MQTT topic>]`
 
  for example:
 
  `mqtt.subscribe[tcp://192.168.1.1:1883,devices/+/values]`
- 
+
  Item must be of type `Zabbix agent(active)`.  
  Also note, that update interval is ignored, values will be received once published to the MQTT broker.
 
