@@ -74,9 +74,11 @@ func (p *Plugin) Watch(requests []*plugin.Request, ctx plugin.ContextProvider) {
 
 	//this block cleans broken clients so they can be reinitialized
 	for broker, mqttClient := range impl.mqttClients {
-		if !(*mqttClient.client).IsConnected() {
-			//delete broken clients, so next subscription will try to reconnect
-			delete(impl.mqttClients, broker)
+		if mqttClient.client != nil {
+			if !(*mqttClient.client).IsConnected() {
+				//delete broken clients, so next subscription will try to reconnect
+				delete(impl.mqttClients, broker)
+			}
 		}
 	}
 
