@@ -1,3 +1,7 @@
+# Notice
+
+This was POC project! Please use now available zabbix agent 2 module: https://git.zabbix.com/projects/ZBX/repos/zabbix/browse/src/go/plugins/mqtt
+
 # Zabbix agent2 MQTT subscriber plugin
 
 Zabbix agent2 plugin(watcher) implementing MQTT.
